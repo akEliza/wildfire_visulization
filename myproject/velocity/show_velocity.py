@@ -3,21 +3,22 @@ import numpy as np
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy
 
-data_category = ['backcurve40' , 'headcurve40', 'backcurve80',  'backcurve320' , 'headcurve80' , 'headcurve320',  'valley_losAlamos']
-# 输入和输出路径
+data_category = ['backcurve40', 'headcurve40', 'backcurve80', 'backcurve320', 'headcurve80', 'headcurve320', 'valley_losAlamos']
+# Input and output paths
 input_directory = r"F:\Firetec\valley_losAlamos"
 output_directory = r"E:\MM804\project\myproject\results\valley_losAlamos"
 
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 
-# 颜色映射函数
+# Color mapping function for flames
 def create_flame_colormap():
     ctf = vtk.vtkColorTransferFunction()
-    ctf.AddRGBPoint(330, 0.0, 0.0, 1.0)  # 蓝色
-    ctf.AddRGBPoint(350, 1.0, 0.0, 0.0)  # 红色
+    ctf.AddRGBPoint(330, 0.0, 0.0, 1.0)  # Blue
+    ctf.AddRGBPoint(350, 1.0, 0.0, 0.0)  # Red
     return ctf
 
+# Opacity function for flames
 def create_flame_opacity():
     pf = vtk.vtkPiecewiseFunction()
     pf.AddPoint(330, 0.0)
@@ -25,22 +26,23 @@ def create_flame_opacity():
     pf.AddPoint(350, 0.4)
     return pf
 
+# Color mapping function for wind speed
 def create_wind_colormap():
     ctf = vtk.vtkColorTransferFunction()
     ctf.SetColorSpaceToRGB()
-    ctf.AddRGBPoint(0.0, 0.2, 0.2, 1.0)   # 蓝
-    ctf.AddRGBPoint(13.5, 1.0, 1.0, 1.0)  # 白
-    ctf.AddRGBPoint(27.0, 1.0, 0.0, 0.0)  # 红
+    ctf.AddRGBPoint(0.0, 0.2, 0.2, 1.0)   # Blue
+    ctf.AddRGBPoint(13.5, 1.0, 1.0, 1.0)  # White
+    ctf.AddRGBPoint(27.0, 1.0, 0.0, 0.0)  # Red
     return ctf
 
-# 遍历 .vts 文件
+# Iterate through .vts files
 for _, filename in enumerate(os.listdir(input_directory)):
     if filename.endswith(".vts"):
         grid_file_path = os.path.join(input_directory, filename)
         i = int(filename.split('.')[1]) // 1000
-        print(f"处理文件: {grid_file_path}")
+        print(f"Processing file: {grid_file_path}")
 
-        # 读取 VTK 数据
+        # Read VTK data
         reader = vtk.vtkXMLStructuredGridReader()
         reader.SetFileName(grid_file_path)
         reader.Update()
@@ -53,7 +55,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         spacing = (bounds[1::2] - bounds[::2]) / (np.array(resampled_dims) - 1)
         origin = bounds[::2]
 
-        # Resample 数据
+        # Resample data
         resample = vtk.vtkResampleToImage()
         resample.AddInputDataObject(grid)
         resample.SetSamplingDimensions(resampled_dims)
@@ -61,13 +63,13 @@ for _, filename in enumerate(os.listdir(input_directory)):
         resample.Update()
         image = resample.GetOutput()
 
-        # ====== 火焰字段 ======
+        # ====== Flame field ======
         theta_array = image.GetPointData().GetArray("theta")
         theta_image = vtk.vtkImageData()
         theta_image.DeepCopy(image)
         theta_image.GetPointData().SetScalars(theta_array)
 
-        # ====== 地形提取 ======
+        # ====== Terrain extraction ======
         extractor = vtk.vtkExtractGrid()
         extractor.SetInputData(grid)
         extractor.SetVOI(extent[0], extent[1], extent[2], extent[3], 0, 5)
@@ -85,7 +87,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         terrain_actor.GetProperty().SetDiffuse(0.6)
         terrain_actor.GetProperty().SetSpecular(0.2)
 
-        # ====== 火焰体渲染设置 ======
+        # ====== Flame volume rendering setup ======
         flame_color = create_flame_colormap()
         flame_opacity = create_flame_opacity()
 
@@ -102,7 +104,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         volume_actor.SetMapper(volume_mapper)
         volume_actor.SetProperty(volume_prop)
 
-        # ====== 风速向量场和 magnitude ======
+        # ====== Wind velocity field and magnitude ======
         u_array = image.GetPointData().GetArray("u")
         v_array = image.GetPointData().GetArray("v")
         w_array = image.GetPointData().GetArray("w")
@@ -128,7 +130,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         image.GetPointData().SetVectors(vector_array)
         image.GetPointData().SetScalars(magnitude_array)
 
-        # ====== 流线生成 ======
+        # ====== Streamline generation ======
         line_seed = vtk.vtkLineSource()
         line_seed.SetPoint1(3.15, -750, 222)
         line_seed.SetPoint2(3.15, 750, 222)
@@ -148,7 +150,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         stream_tracer.SetTerminalSpeed(1e-13)
         stream_tracer.Update()
 
-        # ====== 流线颜色映射 ======
+        # ====== Streamline color mapping ======
         wind_colormap = create_wind_colormap()
 
         streamline_mapper = vtk.vtkPolyDataMapper()
@@ -162,7 +164,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         streamline_actor.SetMapper(streamline_mapper)
         streamline_actor.GetProperty().SetLineWidth(0.5)
 
-        # ====== 渲染器设置 ======
+        # ====== Renderer setup ======
         renderer = vtk.vtkRenderer()
         renderer.SetBackground(0.9, 0.9, 0.95)
         renderer.AddActor(terrain_actor)
@@ -170,19 +172,19 @@ for _, filename in enumerate(os.listdir(input_directory)):
         renderer.AddActor(streamline_actor)
         renderer.ResetCamera()
 
-        # 相机设置
+        # Camera setup
         camera = renderer.GetActiveCamera()
         camera.SetClippingRange(1, 20000)
         camera.SetPosition(1400, -1500, 2500)
         camera.SetFocalPoint(300, -100, 250)
         camera.SetViewUp(-0.4, 0.7, 0.6)
 
-        # 渲染窗口设置
+        # Render window setup
         render_window = vtk.vtkRenderWindow()
         render_window.AddRenderer(renderer)
         render_window.SetSize(1920, 1080)
 
-        # 导出图像
+        # Export image
         render_window.Render()
         window_to_image = vtk.vtkWindowToImageFilter()
         window_to_image.SetInput(render_window)

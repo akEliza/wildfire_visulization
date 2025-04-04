@@ -1,20 +1,20 @@
-import os
+import os 
 import numpy as np
 import vtk
 from vtk.util.numpy_support import vtk_to_numpy, numpy_to_vtk
 
-# 输入和输出路径
+# Input and output paths
 input_directory = r"F:\Firetec\valley_losAlamos"
 output_directory = r"E:\MM804\project\myproject\results_vorticity\valley_losAlamos"
 
 if not os.path.exists(output_directory):
     os.makedirs(output_directory)
 
-# ===== 色图设置 =====
+# ===== Colormap Settings =====
 def create_flame_colormap():
     ctf = vtk.vtkColorTransferFunction()
-    ctf.AddRGBPoint(330, 0.0, 0.0, 1.0)  # 蓝
-    ctf.AddRGBPoint(350, 1.0, 0.0, 0.0)  # 红
+    ctf.AddRGBPoint(330, 0.0, 0.0, 1.0)  # Blue
+    ctf.AddRGBPoint(350, 1.0, 0.0, 0.0)  # Red
     return ctf
 
 def create_flame_opacity():
@@ -27,9 +27,9 @@ def create_flame_opacity():
 def create_vorticity_colormap():
     ctf = vtk.vtkColorTransferFunction()
     ctf.SetColorSpaceToRGB()
-    ctf.AddRGBPoint(0.0, 0.2, 0.2, 1.0)    # 蓝
-    ctf.AddRGBPoint(1.5, 1.0, 1.0, 1.0)    # 白
-    ctf.AddRGBPoint(3.0, 1.0, 0.2, 0.2)    # 红
+    ctf.AddRGBPoint(0.0, 0.2, 0.2, 1.0)    # Blue
+    ctf.AddRGBPoint(1.5, 1.0, 1.0, 1.0)    # White
+    ctf.AddRGBPoint(3.0, 1.0, 0.2, 0.2)    # Red
     return ctf
 
 def create_vorticity_opacity():
@@ -39,14 +39,14 @@ def create_vorticity_opacity():
     pf.AddPoint(3.18132, 0.1525)
     return pf
 
-# 遍历所有 .vts 文件
+# Iterate through all .vts files
 for _, filename in enumerate(os.listdir(input_directory)):
     if filename.endswith(".vts"):
         grid_file_path = os.path.join(input_directory, filename)
         i = int(filename.split('.')[1]) // 1000
-        print(f"处理文件: {grid_file_path}")
+        print(f"Processing file: {grid_file_path}")
 
-        # ===== 读取数据 =====
+        # ===== Read Data =====
         reader = vtk.vtkXMLStructuredGridReader()
         reader.SetFileName(grid_file_path)
         reader.Update()
@@ -58,7 +58,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         spacing = (bounds[1::2] - bounds[:-1:2]) / (np.array(resampled_dims) - 1)
         origin = bounds[::2]
 
-        # ===== 重采样为 ImageData =====
+        # ===== Resample to ImageData =====
         resample = vtk.vtkResampleToImage()
         resample.AddInputDataObject(grid)
         resample.SetSamplingDimensions(resampled_dims)
@@ -66,13 +66,13 @@ for _, filename in enumerate(os.listdir(input_directory)):
         resample.Update()
         image = resample.GetOutput()
 
-        # ===== 火焰字段 =====
+        # ===== Flame Field =====
         theta_array = image.GetPointData().GetArray("theta")
         theta_image = vtk.vtkImageData()
         theta_image.DeepCopy(image)
         theta_image.GetPointData().SetScalars(theta_array)
 
-        # ===== 地形提取 =====
+        # ===== Extract Terrain =====
         extractor = vtk.vtkExtractGrid()
         extractor.SetInputData(grid)
         extractor.SetVOI(extent[0], extent[1], extent[2], extent[3], 0, 5)
@@ -90,7 +90,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         terrain_actor.GetProperty().SetDiffuse(0.6)
         terrain_actor.GetProperty().SetSpecular(0.2)
 
-        # ===== 火焰 volume actor =====
+        # ===== Flame Volume Actor =====
         flame_color = create_flame_colormap()
         flame_opacity = create_flame_opacity()
 
@@ -107,7 +107,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         flame_actor.SetMapper(flame_mapper)
         flame_actor.SetProperty(flame_prop)
 
-        # ===== 计算涡量 vector -> vorticity magnitude =====
+        # ===== Compute Vorticity Vector -> Vorticity Magnitude =====
         u_array = image.GetPointData().GetArray("u")
         v_array = image.GetPointData().GetArray("v")
         w_array = image.GetPointData().GetArray("w")
@@ -139,7 +139,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         vort_np = vtk_to_numpy(c2p.GetOutput().GetPointData().GetArray("Vorticity"))
         vort_mag = np.linalg.norm(vort_np, ord=2, axis=1)
         vort_mag_3d = vort_mag.reshape(resampled_dims)
-        vort_mag_3d[-5:, :, :] = 0  # Z 方向裁剪顶部
+        vort_mag_3d[-5:, :, :] = 0  # Clip top layers in Z direction
         vort_vtk_array = numpy_to_vtk(vort_mag_3d.reshape(-1))
         vort_vtk_array.SetName("vortMag")
 
@@ -147,7 +147,7 @@ for _, filename in enumerate(os.listdir(input_directory)):
         vort_image.DeepCopy(image)
         vort_image.GetPointData().SetScalars(vort_vtk_array)
 
-        # ===== 涡量 volume actor =====
+        # ===== Vorticity Volume Actor =====
         vort_color = create_vorticity_colormap()
         vort_opacity = create_vorticity_opacity()
 
@@ -164,9 +164,9 @@ for _, filename in enumerate(os.listdir(input_directory)):
         vort_actor.SetMapper(vort_mapper)
         vort_actor.SetProperty(vort_prop)
 
-        # ===== 渲染器设置 =====
+        # ===== Renderer Settings =====
         renderer = vtk.vtkRenderer()
-        renderer.SetBackground((0.9, 0.9, 0.95))  # 黑色背景
+        renderer.SetBackground((0.9, 0.9, 0.95))  # Light gray background
         renderer.AddActor(terrain_actor)
         renderer.AddActor(flame_actor)
         renderer.AddActor(vort_actor)

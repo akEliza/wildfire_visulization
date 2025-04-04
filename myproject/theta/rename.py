@@ -1,17 +1,17 @@
 import os
 
-folder = r'E:\MM804\project\myproject\results_vorticity\backcurve40'  # 当前目录
+folder = r'E:\MM804\project\myproject\results_vorticity\backcurve40'  # Current directory
 files = [f for f in os.listdir(folder) if f.lower().endswith(".png")]
 
-# 自定义排序（数字顺序），提取其中的数字部分（如果有）
+# Custom sort by numeric order, extracting number part from filename (if any)
 def extract_number(filename):
     digits = ''.join(filter(str.isdigit, filename))
     return int(digits) if digits else float('inf')
 
-# 排序文件列表
+# Sort the file list
 files.sort(key=extract_number)
 
-# 重命名为 01.png ~ 72.png
+# Rename files to 001.png ~ 072.png
 for i, old_name in enumerate(files, start=1):
     new_name = f"{i:03d}.png"
     old_path = os.path.join(folder, old_name)
