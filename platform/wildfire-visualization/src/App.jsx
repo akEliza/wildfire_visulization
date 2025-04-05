@@ -1,5 +1,7 @@
-import React, { useState } from "react";
+import React, { useState } from 'react';
+import { AppBar, Toolbar, Typography, Drawer, List, ListItem, ListItemText, Box, Divider } from '@mui/material';
 
+const drawerWidth = 240;
 const variables = ["theta", "rhof", "velocity", "vorticity"];
 const terrains = [
   "headcurve40",
@@ -19,41 +21,68 @@ export default function App() {
   const filePath = `results/${selectedVar}/${selectedTerrain}.${fileExt}`;
 
   return (
-    <div className="min-h-screen bg-gray-100 p-6 font-sans">
-      <h1 className="text-3xl font-bold mb-6 text-center">Wildfire Visualization</h1>
+    <Box sx={{ display: 'flex' }}>
+      <AppBar position="fixed" sx={{ zIndex: (theme) => theme.zIndex.drawer + 1 }}>
+        <Toolbar>
+          <Typography variant="h6" noWrap component="div">
+            Wildfire Visualization
+          </Typography>
+        </Toolbar>
+      </AppBar>
 
-      <div className="flex justify-center space-x-4 mb-8">
-        <select
-          value={selectedVar}
-          onChange={(e) => setSelectedVar(e.target.value)}
-          className="border border-gray-300 rounded px-4 py-2 shadow-sm text-xl font-semibold"
-        >
-          {variables.map((v) => (
-            <option key={v} value={v}>{v}</option>
-          ))}
-        </select>
+      <Drawer
+        variant="permanent"
+        sx={{
+          width: drawerWidth,
+          flexShrink: 0,
+          [`& .MuiDrawer-paper`]: { width: drawerWidth, boxSizing: 'border-box' },
+        }}
+      >
+        <Toolbar />
+        <Box sx={{ overflow: 'auto' }}>
+          <List>
+            <Typography variant="h6" sx={{ pl: 2, pt: 1 }}>Variables</Typography>
+            {variables.map((v) => (
+              <ListItem
+                button
+                key={v}
+                selected={selectedVar === v}
+                onClick={() => setSelectedVar(v)}
+              >
+                <ListItemText primary={v} />
+              </ListItem>
+            ))}
+          </List>
+          <Divider />
+          <List>
+            <Typography variant="h6" sx={{ pl: 2, pt: 1 }}>Terrains</Typography>
+            {terrains.map((t) => (
+              <ListItem
+                button
+                key={t}
+                selected={selectedTerrain === t}
+                onClick={() => setSelectedTerrain(t)}
+              >
+                <ListItemText primary={t} />
+              </ListItem>
+            ))}
+          </List>
+        </Box>
+      </Drawer>
 
-        <select
-          value={selectedTerrain}
-          onChange={(e) => setSelectedTerrain(e.target.value)}
-          className="border border-gray-300 rounded px-4 py-2 shadow-sm text-xl font-semibold"
-        >
-          {terrains.map((t) => (
-            <option key={t} value={t}>{t}</option>
-          ))}
-        </select>
-      </div>
-
-      <div className="max-w-4xl mx-auto border rounded-lg bg-white shadow p-4">
-        {selectedVar === "rhof" ? (
-          <img src={filePath} alt="Visualization" className="w-full h-auto" />
-        ) : (
-          <video key={filePath} controls className="w-full h-auto">
-            <source src={filePath} type="video/mp4" />
-            Your browser does not support the video tag.
-          </video>
-        )}
-      </div>
-    </div>
+      <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
+        <Toolbar />
+        <Box sx={{ border: '1px solid #ccc', borderRadius: 1, p: 2 }}>
+          {selectedVar === "rhof" ? (
+            <img src={filePath} alt="Visualization" style={{ width: '100%', height: 'auto' }} />
+          ) : (
+            <video key={filePath} controls style={{ width: '100%', height: 'auto' }}>
+              <source src={filePath} type="video/mp4" />
+              Your browser does not support the video tag.
+            </video>
+          )}
+        </Box>
+      </Box>
+    </Box>
   );
 }
