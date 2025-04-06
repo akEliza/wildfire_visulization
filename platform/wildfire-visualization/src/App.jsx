@@ -46,8 +46,13 @@ export default function App() {
               <ListItem
                 button
                 key={v}
-                selected={selectedVar === v}
                 onClick={() => setSelectedVar(v)}
+                sx={{
+                  bgcolor: selectedVar === v ? 'grey.300' : 'inherit',
+                  '&:hover': {
+                    bgcolor: 'grey.400'
+                  }
+                }}
               >
                 <ListItemText primary={v} />
               </ListItem>
@@ -60,8 +65,13 @@ export default function App() {
               <ListItem
                 button
                 key={t}
-                selected={selectedTerrain === t}
                 onClick={() => setSelectedTerrain(t)}
+                sx={{
+                  bgcolor: selectedTerrain === t ? 'grey.300' : 'inherit',
+                  '&:hover': {
+                    bgcolor: 'grey.400'
+                  }
+                }}
               >
                 <ListItemText primary={t} />
               </ListItem>
